@@ -130,7 +130,7 @@ display_empty_frame_line
 
 ## shell script に関して学習した事
 
-### 開発ツール
+#### 開発ツール
 
 linter, formatter に関しは以下のものを使うようにしています。shellcheck に従って書いて、formatter が自動的にフォーマットしてくれます。その他の細かなところはできるだけ考えないようにしてスクリプトを書いていきます。
 
