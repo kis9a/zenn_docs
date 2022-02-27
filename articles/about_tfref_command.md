@@ -1,5 +1,5 @@
 ---
-title: "Terraform のドキュメントを簡単に開くためのシェルスクリプトを書きました"
+title: "Terraform のドキュメントを簡単に開くためのコマンドを書きました！(tfref)"
 emoji: "🐚"
 type: "tech"
 topics: ["shell", "bash", "terraform"]
