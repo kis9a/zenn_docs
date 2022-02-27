@@ -1,8 +1,8 @@
 ---
 title: "文字列を文字で囲むコマンドを作りました！(runeboxes)"
-emoji: "💩"
+emoji: "🐚"
 type: "tech"
-topics: ["bash"]
+topics: ["shell", "bash"]
 published: false
 ---
 
