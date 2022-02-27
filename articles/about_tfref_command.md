@@ -1,19 +1,23 @@
 ---
-title: "Terraform のドキュメントを早く開くためのシェルスクリプトを書きました"
+title: "Terraform のドキュメントを簡単に開くためのシェルスクリプトを書きました"
 emoji: "🐚"
 type: "tech"
 topics: ["shell", "bash", "terraform"]
-published: false
+published: true
 ---
 
 ## はじめに
 
-Terraform のドキュメントを早く開くためのシェルスクリプトを書きました。
+Terraform のドキュメントを簡単に開くためのシェルスクリプトを書きました。
 リポジトリ: [GitHub - kis9a/tfref: Open terraform reference easily.](https://github.com/kis9a/tfref)
 
-最近、terraform を書くことが多いのですが、<https://registry.terraform.io/providers/hashicorp/aws/latest/docs> $provider/docs を開いて検索して...リソースのドキュメントを探して...ようやく見れる...が面倒になたので、vim から :!tfref ファイル名 ライン番号 で現在のラインより上のリソース、data 定義を元に簡単に開けるようにしてみました。 現在は、プロバイダー aws, datadog, data_datadog, data_aws しか対応してないので、GCP とか使っている方は PR いただくか ご自分で改造お願いします。また、今後の terraform document の URL の変更等あった場合、動作しない場合には　スクリプトのみを参考にお願いします。
+最近、terraform を書くことが多いのですが、<https://registry.terraform.io/providers/hashicorp/aws/latest/docs> $プロバイダーの docs を検索して開いて...リソースのドキュメントを検索して...ようやく見れる...が面倒になたので、vim から (:!tfref ファイル名 ライン番号)で現在のラインよりも上のラインにあるリソース、data 定義を元に URL に変換して簡単に開けるようにしてみました。 現在は、プロバイダー aws, datadog, data_datadog, data_aws しか対応してないので、GCP など他のプロバイダーを使っている方は PR いただくか ご自分で改造お願いします。また、今後の terraform docs 自体の ページ URL 構造の変更等あった場合、動作しない場合には スクリプトのみを参考にお願いします。
 
-### インストール tfref
+## イメージ
+
+![tfref.gif](/images/tfref.gif)
+
+## インストール tfref
 
 PATH が通っているディレクトリにファイルを追加して、実行権限を付与します。
 
@@ -22,7 +26,7 @@ sudo curl -s https://raw.githubusercontent.com/kis9a/tfref/main/tfref > /usr/loc
 chmod +x /usr/local/bin/tfref
 ```
 
-### vim から呼び出す
+## vim から呼び出す
 
 Vim ではなくても、エディターからコマンド呼び出せる方は参考に。
 
@@ -37,7 +41,7 @@ endfunction
 nnoremap <silent> <Leader>tf :call <SID>tfref()<CR>
 ```
 
-### 使用方法
+## 使用方法
 
 tfref -h
 
@@ -61,12 +65,12 @@ EXAMPLE:
   tfref -f "./ec2.tf" 20
 ```
 
-### 開発ツール
+## 開発ツール
 
 linter: https://github.com/koalaman/shellcheck  
 formatter: https://github.com/mvdan/sh
 
-### テスト
+## テスト
 
 OSX (Darwin Kernel Version 21.2.0) と Ubuntu 20.04 (ami-0ec4d40472158dbd2) で GREEN 確認
 

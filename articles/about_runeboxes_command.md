@@ -3,17 +3,17 @@ title: "文字列を文字で囲むコマンドを作りました！(runeboxes)"
 emoji: "🐚"
 type: "tech"
 topics: ["shell", "bash"]
-published: false
+published: true
 ---
 
 ## はじめに
 
 文字列を文字で囲むコマンドが欲しかったので作りました！
-以前から terminal で生活しているので、いろいろなコマンドをインストールしたり、適当な shell script を書いて生活環境を向上させてきました。今回の runeboxes コマンドもそのライフサイクルの一環です。使用用途があるわからないですが、使えそうな箇所を参考にしてみてください。
+以前から terminal で開発生活しているので、いろいろなコマンドをインストールしたり、適当な shell script を書いて生活環境を向上させてきました。今回の runeboxes コマンドもそのライフサイクルの一環です。使用用途があるわからないですが、使えそうな箇所を参考にしてみてください。
 
-また、bash script で書くのは 複数環境での互換性よりも手軽さを意識しているからです。OSX (Darwin Kernel Version 21.2.0) と Ubuntu 20.04 (ami-0ec4d40472158dbd2)で動作確認済み、shellcheck を参考に作成しています。
+また、shell script で書くのは 複数環境での互換性よりも手軽さを意識しているからです。OSX (Darwin Kernel Version 21.2.0) と Ubuntu 20.04 (ami-0ec4d40472158dbd2)で動作確認済み、shellcheck を参考に作成しています。
 
-全角、半角等混ざった文字列を囲めるようになってます。以前、~/.zshrc に書き込んで使用していた [play-display-in-box-harfwidth.sh · GitHub](https://gist.github.com/kis9a/3a95e26ece257b65a87539cb97381181) では、半角のみの対応だったのでそこからの改善です、文字列の幅を取得するテクニックが bash script で見つかりそうになかったので、文字幅の取得に関しては、[GitHub - mattn/go-runewidth](https://github.com/mattn/go-runewidth) を使用させていただいています。
+全角、半角等、複数幅が混ざった文字列を囲めるようになってます。以前、~/.zshrc に書き込んで使用していた [play-display-in-box-harfwidth.sh · GitHub](https://gist.github.com/kis9a/3a95e26ece257b65a87539cb97381181) では、半角のみの対応だったのでそこからの改善です、文字列の幅を取得するテクニックが shell script で見つかりそうになかったので、文字幅の取得に関しては、[GitHub - mattn/go-runewidth](https://github.com/mattn/go-runewidth) を使用させていただいています。
 
 リポジトリ: [GitHub - kis9a/runeboxes: Display the piped string in the character box.](https://github.com/kis9a/runeboxes)
 
@@ -86,7 +86,14 @@ while read -r l; do
   lines+=("$l")
 done <<<"$in"
 
-## もし、box_char_runewidth (文字列を囲む文字)の幅が 2の時
+
+## 文字列を囲む文字(box_char_runewidth)の幅は 2 以下です。
+if [[ "$box_char_runewidth" -gt 2 ]]; then
+  err "String is over 2 runewidth"
+  show_help
+fi
+
+## もし、文字列を囲む文字(box_char_runewidth)の幅が 2 の時
 ## 文字列の最大幅(max) を偶数にします。
 if [[ "$box_char_runewidth" -eq 2 ]]; then
   if [[ $((max % 2)) -ne 0 ]]; then
@@ -121,7 +128,7 @@ display_new_line
 display_empty_frame_line
 ```
 
-## bash に関して学習した事
+## shell script に関して学習した事
 
 ### 開発ツール
 
@@ -129,12 +136,13 @@ linter, formatter に関しは以下のものを使うようにしています�
 
 linter: [GitHub - koalaman/shellcheck: ShellCheck, a static analysis tool for shell scripts](https://github.com/koalaman/shellcheck)  
 formatter: [GitHub - mvdan/sh: A shell parser, formatter, and interpreter with bash support; includes shfmt](https://github.com/mvdan/sh)
+brew install shfmt
+brew install shellcheck
 
+LSP
 Nvim + coc.nvim を使っているので以下のインストールと設定をしています。
 :CocInstall coc-sh
 :CocInstall coc-diagnostic
-brew install shfmt
-brew install shellcheck
 
 ```json
 # coc-settings.json
@@ -167,17 +175,19 @@ is_pipe() {
 
 #### 関数中の変数はとりあえず local をつける
 
-他の関数を呼び出した時に意図しない値が入っていて意図しない条件分岐になるので local をつけている。細かい仕様は知らない。
-[Bash Script の作法 - Qiita](https://qiita.com/autotaker1984/items/bc758fcf368c1a167353#関数内のローカル変数はlocalをつける)
+他の関数を呼び出した時に意図しない値が入っていておかしくなるので local をつける。
+
+- [Bash Script の作法 - Qiita](https://qiita.com/autotaker1984/items/bc758fcf368c1a167353#関数内のローカル変数はlocalをつける)
 
 #### echo -n の移植性の問題
 
-最初は完全に echo -n で改行のない文字列を出力していましたが、移植性に問題があるようです。
-[シェルスクリプトの echo の移植性の問題に本気で対応する - Qiita](https://qiita.com/ko1nksm/items/d0b066268cda42ff24eb)
+最初は echo -n で改行のない文字列を出力していましたが、移植性に問題があるようです。print を使いました。
+
+- [シェルスクリプトの echo の移植性の問題に本気で対応する - Qiita](https://qiita.com/ko1nksm/items/d0b066268cda42ff24eb)
 
 #### runewidth "$(echo "\t")" が 0 になる
 
-とりあえず、Tab は、スペース４つに変換しています。なんで 0 になるかわかったら追記します。
+とりあえず、Tab は、スペース４つに変換しています。なぜ 0 になるかわかったら追記します。
 
 ```bash
 tab_to_space() {
@@ -199,16 +209,6 @@ run_runeboxes "$box_char"
 ```bash
 stdout="$(run_runeboxes "$box_char")"
 echo "$stdout"
-```
-
-/dev/tty, exec とか使っても良さそう
-
-```bash
-exec > /tmp/file # redirect to file
-echo stdout to /tmp/file
-exec > /dev/tty # stdout to display
-echo stdout to display
-cat /tmp/file # stdout to file
 ```
 
 #### cat コマンドだけでも楽しめる
@@ -239,5 +239,5 @@ exec 3< <(echo a); cat <&3; exec 3>&-
 
 ### 終わりに
 
-シェルスクリプトは他の言語より手軽に書けて手軽に実行できる点がいいですね！  
-runeboxes コマンド役に立つかどうかはわかりませんが、必要であれば使ってみてください。
+シェルスクリプトは他の言語より手軽に書けて手軽に実行できる点がいいですね。  
+runeboxes コマンドに関しては役に立つかどうかはわかりませんが、ぜひ使ってみてください！
