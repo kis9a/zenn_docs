@@ -1,5 +1,5 @@
 ---
-title: "Vim script で三角形に文字列を表示するための関数を書きました！"
+title: "Vim script で三角形に文字列を入力するための関数を書きました！"
 emoji: "🔺"
 type: "tech"
 topics: ["vim", "poop"]
