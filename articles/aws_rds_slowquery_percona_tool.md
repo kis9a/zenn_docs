@@ -3,21 +3,31 @@ title: "AWS Aurora MySQL の slowquery logs を取得して percona-toolkit で�
 emoji: "🛠"
 type: "tech"
 topics: ["mysql", "shell", "terraform"]
-published: false
+published: true
 ---
+
+## 初めに
+
+最近データベースの CPU が 100%に張り付いた状態になり、負荷の特定と改善が課題になりました。クエリログを確認したところ、slowquery が多く出ていたので、これを集計して次回の SQL 改善や負荷対策に対策しようと思っています。色々調べたところ、AWS Aurora MySQL の slowquery log の有効かと percona-toolkit で集計する方法がヒットしたのでまとめて共有します。
 
 ## Slowquery log を有効にする
 
-> スロークエリーログは、実行に long_query_time 秒を超える時間がかかり、少なくとも min_examined_row_limit 行を検査する必要がある SQL ステートメントで構成されます。 スロークエリーログは、実行に長い時間がかかっているため最適化の候補となるクエリーを見つけるために使用できます。long_query_time の最小値およびデフォルト値は、それぞれ 0 および 10 です。 値はマイクロ秒の精度まで指定できます。デフォルトでは、管理ステートメントはログに記録されず、参照にインデックスを使用しないクエリーも記録されません。 あとで説明するように、この動作は log_slow_admin_statements および log_queries_not_using_indexes を使用して変更することができます。
+まず初めに、slowquery のログを有効かする必要があります。RDS のパラメーターと設定を slowquery のログを有効化します。
 
-long_query_time に関しては、適宜変更してください。SQL が N 秒以上の場合に slowquery log を作成します。  
-また、そのほか詳細な parameter のオプションに関してもドキュメントを参考にしてください。
+> スロークエリーログは、実行に long_query_time 秒を超える時間がかかり、少なくとも min_examined_row_limit 行を検査する必要がある SQL ステートメントで構成されます。 スロークエリーログは、実行に長い時間がかかっているため最適化の候補となるクエリーを見つけるために使用できます。long_query_time の最小値およびデフォルト値は、それぞれ 0 および 10 です。 値はマイクロ秒の精度まで指定できます。
 
 https://dev.mysql.com/doc/refman/8.0/ja/slow-query-log.html
+
+> Aurora MySQL ログイベントを有効にすると、Amazon CloudWatch Logs でイベントをモニタリングできます。新しいクラスターロググループは、cluster-name が DB クラスター名となり、log_type がログタイプとなる次のプレフィックスの Aurora DB クラスターに自動的に作成されます。 /aws/rds/cluster/cluster-name/log_type 例えば、エクスポート関数を設定して、mydbcluster という名前の DB クラスターのスロークエリログを作成すると、スロークエリデータは、/aws/rds/cluster/mydbcluster/slowquery ロググループのスロークエリログストリームに保存されます。 クラスターのすべてのインスタンスにおけるイベントは、異なるログストリーミングを使用して、ロググループにプッシュされます。
+
+[Amazon CloudWatch Logs への Amazon Aurora MySQL ログの発行 - Amazon Aurora](https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Integrating.CloudWatch.html)
 
 ### terraform の場合
 
 以下フィールのフィールドを設定しましょう。
+
+slow_query_log = 1 　は、slowquery log を有効にします。
+long_query_time に関しては、適宜変更してください。SQL が N 秒以上の場合に slowquery log を作成します。また、そのほか詳細な parameter のオプションに関してもドキュメントを参考にしてください。
 
 ```hcl
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_parameter_group#parameter
@@ -56,15 +66,16 @@ resource "aws_db_instance" "dev" {
 以下の記事がわかりやすいため参考にしてみてください。
 https://dev.classmethod.jp/articles/amazon-aurora-export-cloudwatch-logs/
 
-## Slowquery log group を取得する
+設定できているかは、mysql で実際に変数を参照すれば確認できます。
 
-とりあえず、slowquery と名前のつくロググループの一覧を取得します。
-
-```bash
-#!/bin/bash
-AWS_PROFILE="default" # change to your aws profile
-aws logs describe-log-groups --profile "$AWS_PROFILE" \
---output json | jq -r '.logGroups | .[] | .logGroupName' | grep slowquery
+```
+mysql> show variables like 'long%';
++-----------------+----------+
+| Variable_name   | Value    |
++-----------------+----------+
+| long_query_time | 3.000000 |
++-----------------+----------+
+1 row in set (0.00 sec)
 ```
 
 ## slowquery logs の集計
@@ -93,10 +104,25 @@ MySQL に関連する、複雑なシステムタスクを簡単に実行する�
 > MySQL のクエリをログ、プロセスリスト、tcpdump の結果から分析します。
 > usage: pt-query-digest [OPTIONS] [FILES] [DSN]
 
-こちらを参考にしました。
-[percona-toolkit の紹介と各機能の早見表 - Qiita](https://qiita.com/hakuro/items/9b3b0452d10def71801a)
+pt-query-digest に関してはこちらが参考になります。
+[スローログの集計に便利な「pt-query-digest」を使ってみよう | Think IT（シンクイット）](https://thinkit.co.jp/article/9617)
 
 ## 集計スクリプト
+
+### Slowquery log group を取得する
+
+とりあえず、slowquery と名前のつくロググループの一覧を取得します。
+
+```bash
+#!/bin/bash
+AWS_PROFILE="default" # change to your aws profile
+aws logs describe-log-groups --profile "$AWS_PROFILE" \
+--output json | jq -r '.logGroups | .[] | .logGroupName' | grep slowquery
+```
+
+\# set variables の項目にある変数を適宜編集しましょう。  
+上のスクリプトで取得した LOG_GROUP を設定します。  
+改善前、改善後、で違いが判断できるように start time, end time をメモしておきましょう。
 
 ```bash
 #!/bin/bash
@@ -107,20 +133,25 @@ AWS_PROFILE="default" # change to your aws profile
 START_TIME="2021-10-01 12:00:00"
 END_TIME="2022-03-01 12:00:00"
 
+# parse to microseconds unixtime
 timestamp_start="$(($(TZ=JST-9 date -jf "%Y-%m-%d %H:%M:%S" "$START_TIME" +%s) * 1000))"
 timestamp_end="$(($(TZ=JST-9 date -jf "%Y-%m-%d %H:%M:%S" "$END_TIME" +%s) * 1000))"
 
+# colorable
 readonly cf="\\033[0m"
 readonly red="\\033[0;31m"
 
+# secion header
 display_section_header() {
   echo -e "${red}==================== $1 ====================${cf}"
 }
 
+# get log streams
 cloudwatch-log-streams() {
   aws logs describe-log-streams --log-group-name "$1" --profile "$AWS_PROFILE" --output json | jq .
 }
 
+# get log events
 cloudwatch_log_events() {
   aws logs get-log-events --profile "$AWS_PROFILE" \
     --log-group-name "$LOG_GROUP" \
@@ -229,4 +260,4 @@ SELECT count(1) FROM `devs`\G
 
 ## 終わりに
 
-[スローログの集計に便利な「pt-query-digest」を使ってみよう | Think IT（シンクイット）](https://thinkit.co.jp/article/9617)
+SQL 改善の方でも知見を得たら随時共有していこうと思います。データベースに関してもまだ初学者なので一歩ずつ勉強していきたいと思っています。そのほかで、もっといい方法とあればぜひコメントで教えていただけると幸いです。
