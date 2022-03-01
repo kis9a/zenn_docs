@@ -3,7 +3,7 @@ title: "AWS Aurora MySQL の slowquery logs を取得して percona-toolkit で�
 emoji: "🛠"
 type: "tech"
 topics: ["mysql", "shell", "terraform"]
-published: true
+published: false
 ---
 
 ## 初めに
