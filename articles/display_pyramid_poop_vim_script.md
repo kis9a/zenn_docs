@@ -65,7 +65,7 @@ nnoremap <silent> gp :PyramidPoop<CR>
 💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩
 ```
 
-## Shell script
+### Shell script
 
 ~/.zshrc に書いてみるとこんな感じ
 

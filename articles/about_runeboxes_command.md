@@ -128,7 +128,7 @@ display_new_line
 display_empty_frame_line
 ```
 
-## shell script に関して学習した事
+## shell script
 
 #### 開発ツール
 
