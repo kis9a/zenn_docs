@@ -1,14 +1,12 @@
 ---
-title: "Vim script で三角形に文字列を入力するための関数を書きました！"
+title: "Vim script 三角形に文字列を入力するためだけの関数を書きました！"
 emoji: "🔺"
 type: "tech"
-topics: ["vim", "poop"]
+topics: ["vim", "shell"]
 published: true
 ---
 
-## スクリプト
-
-### Vim script
+## Vim script
 
 ~/.vimrc
 
@@ -65,7 +63,7 @@ nnoremap <silent> gp :PyramidPoop<CR>
 💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩💩
 ```
 
-### Shell script
+## Shell script
 
 ~/.zshrc に書いてみるとこんな感じ
 
