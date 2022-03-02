@@ -1,0 +1,16 @@
+{
+  "name": "zenn-docs",
+  "version": "1.0.0",
+  "description": "* [📘 How to use](https://zenn.dev/zenn/articles/zenn-cli-guide)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kis9a",
+  "license": "ISC",
+  "dependencies": {
+    "textlint": "^12.0.2",
+    "zenn-cli": "^0.1.107",
+    "textlint-rule-preset-ja-technical-writing": "^4.0.1"
+  }
+}

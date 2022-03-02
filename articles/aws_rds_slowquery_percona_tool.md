@@ -81,24 +81,24 @@ mysql> show variables like 'long%';
 
 ### 必要なツールのインストール
 
-brew の場合
+brew の場合。
 
 ```bash
 brew install jq
 brew install percona-toolkit
 ```
 
-### jq とは ？
+### jq とは
 
 もっとも一般的で多機能なコマンドラインでの json parser です  
 [GitHub - stedolan/jq: Command-line JSON processor](https://github.com/stedolan/jq)
 
-### percona-toolkit とは ？
+### percona-toolkit とは
 
-MySQL に関連する、複雑なシステムタスクを簡単に実行するためのコマンドラインツールのコレクションです
+MySQL に関連する、複雑なシステムタスクを簡単に実行するためのコマンドラインツールのコレクションです。
 [GitHub - percona/percona-toolkit: Percona Toolkit](https://github.com/percona/percona-toolkit)
 
-今回使用する pt-query-digest コマンドは、
+今回使用する pt-query-digest コマンドとは。
 
 > MySQL のクエリをログ、プロセスリスト、tcpdump の結果から分析します。
 > usage: pt-query-digest [OPTIONS] [FILES] [DSN]
@@ -259,4 +259,9 @@ SELECT count(1) FROM `devs`\G
 
 ## 終わりに
 
-SQL 改善の方でも知見を得たら随時共有していこうと思います。データベースに関してもまだ初学者なので一歩ずつ勉強していきたいと思っています。そのほかで、もっといい方法とあればぜひコメントで教えていただけると幸いです。 また、今後、安定運用に入ったら、cloudwatch logs subscription filter や lambda を使用して slowquery を通知する CI を書いてもよっそうだと考えています。 [Amazon Aurora のスロークエリを Slack に通知する - enomotodev’s blog](https://enomotodev.hatenablog.com/entry/2018/12/12/224648)
+SQL 改善の方でも知見を得たら随時共有していこうと思っています。  
+また、データベースに関してもまだ初学者なので一歩ずつ勉強していきたいと思っています。  
+そのほかで、もっといい方法とあればぜひコメントで教えていただけると幸いです。  
+今後、安定運用に入ったら、cloudwatch logs subscription filter や、  
+lambda を使用して slowquery を通知する CI を書いてもよっそうだと考えています。  
+[Amazon Aurora のスロークエリを Slack に通知する - enomotodev’s blog](https://enomotodev.hatenablog.com/entry/2018/12/12/224648)
