@@ -3,7 +3,7 @@ title: "CloudWatch logs Subsrciption filter からSlackの特定チャンネル�
 emoji: "⏰"
 type: "tech"
 topics: ["go", "lambda", "cloudwatch", "terraform"]
-published: false
+published: true
 ---
 
 ## 初めに
@@ -596,4 +596,4 @@ resource "aws_iam_role_policy_attachment" "cloudwatch" {
 
 複数のサービスからのログを Slack 通知して生産性向上やサービス改善に生かしましょう。  
 部分的ではありますが、今回の記事が役に立つと幸いです。  
-また、関数の改善があったり指摘があれば逐一修正していこうと思います。
+また、関数の改善があったり間違いがあれば逐一修正していこうと思います。
