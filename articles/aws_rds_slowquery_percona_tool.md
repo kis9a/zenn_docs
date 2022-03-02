@@ -1,9 +1,9 @@
 ---
 title: "AWS Aurora MySQL の slowquery logs を取得して percona-toolkit で集計する"
-emoji: "🛠"
+emoji: "📊"
 type: "tech"
 topics: ["mysql", "shell", "terraform"]
-published: false
+published: true
 ---
 
 ## 初めに
@@ -25,8 +25,7 @@ https://dev.mysql.com/doc/refman/8.0/ja/slow-query-log.html
 ### terraform の場合
 
 以下フィールのフィールドを設定しましょう。
-
-slow_query_log = 1 　は、slowquery log を有効にします。
+slow_query_log = 1 は、slowquery log を有効にします。
 long_query_time に関しては、適宜変更してください。SQL が N 秒以上の場合に slowquery log を作成します。また、そのほか詳細な parameter のオプションに関してもドキュメントを参考にしてください。
 
 ```hcl
@@ -260,4 +259,4 @@ SELECT count(1) FROM `devs`\G
 
 ## 終わりに
 
-SQL 改善の方でも知見を得たら随時共有していこうと思います。データベースに関してもまだ初学者なので一歩ずつ勉強していきたいと思っています。そのほかで、もっといい方法とあればぜひコメントで教えていただけると幸いです。
+SQL 改善の方でも知見を得たら随時共有していこうと思います。データベースに関してもまだ初学者なので一歩ずつ勉強していきたいと思っています。そのほかで、もっといい方法とあればぜひコメントで教えていただけると幸いです。 また、今後、安定運用に入ったら、cloudwatch logs subscription filter や lambda を使用して slowquery を通知する CI を書いてもよっそうだと考えています。 [Amazon Aurora のスロークエリを Slack に通知する - enomotodev’s blog](https://enomotodev.hatenablog.com/entry/2018/12/12/224648)
