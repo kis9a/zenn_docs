@@ -10,7 +10,7 @@ published: true
 
 CloudWatch logs には、subscription filter という機能があります。
 これは、CloudWatch logs から 文字列やパターンでフィルターしたログを  
-Kinesis stream や Lambda function にログとイベントを発火することができます。
+Kinesis stream や Lambda function にログとイベントを発火できます。
 詳細は、以下の公式ドキュメントをみてみましょう。
 
 https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/logs/SubscriptionFilters.html

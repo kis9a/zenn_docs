@@ -207,8 +207,8 @@ run_runeboxes "$box_char"
 [display_count_down_number_1.md · GitHub](https://gist.github.com/kis9a/f0d35e91e1b24f5c07d12b1f27dcd1f8) の画像のような出力になります。一旦変数に格納してからその後、画面出力するのがいいです。
 
 ```bash
-stdout="$(run_runeboxes "$box_char")"
-echo "$stdout"
+out="$(run_runeboxes "$box_char")"
+echo "$out"
 ```
 
 #### cat コマンドだけでも楽しめる
