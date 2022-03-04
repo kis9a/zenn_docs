@@ -116,7 +116,7 @@ $ bindkey コマンドで設定されている bindkey 一覧が取得できま�
 ZLE に関しては以下の記事がわかりやすいので参考にしましょう。非常に便利です。
 [コマンドライン編集機能 Zsh Line Editor を使いこなす - Qiita](https://qiita.com/b4b4r07/items/8db0257d2e6f6b19ecb9)
 
-個人的に他の部分では以下用途などで使用しています。(zle accept-line)
+個人的に他の部分では以下用途などで使用しています。
 
 https://zenn.dev/kis9a/scraps/02f3ec438d93d1
 
@@ -139,6 +139,14 @@ function zf() {
 }
 zle -N zf
 bindkey '^j' zf
+```
+
+Vim でコマンドラインを編集する。
+
+```bash
+# Edit line in vim with ctrl-e:
+autoload edit-command-line; zle -N edit-command-line
+bindkey '^e' edit-command-line
 ```
 
 ## おわりに
