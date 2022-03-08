@@ -91,6 +91,15 @@ zsh の関数、alias 一覧を取得します。
 grep -v で内部関数や [a-z] 以外から始まるような関数は除外してます。  
 bash -c "compgen -c" という、bash built-in command を使用して、コマンド一覧を取得します。
 
+(追記)
+compgen コマンドが、便利なオプションあったので、書き換えてもいいかもしれないです。  
+compgen -c # will list all the commands you could run.  
+compgen -a # will list all the aliases you could run.  
+compgen -b # will list all the built-ins you could run.  
+compgen -k # will list all the keywords you could run.  
+compgen -A function # will list all the functions you could run.  
+compgen -A function -abck # will list all the above in one go.
+
 #### zh()
 
 zsh の関数、alias 一覧をから、fzf で検索して、関数、alias の内容を表示します。  
