@@ -1,14 +1,23 @@
 ---
-title: "最近、業務で使用した AWS WAF の設定、IP, body, rate-limit 制限など [Terraform]"
+title: "最近、業務で使用した AWS WAF の設定、IP, Request, Path 制限など。 [Terraform]"
 emoji: "☁"
 type: "tech"
 topics: ["terraform", "WAF", "AWS"]
 published: false
 ---
 
-### WAF
+## WAF
+
+WAF の一般的な FW (FireWall) との違いは、FW は、通信における送信元情報と送信先情報(IP アドレスやポート番号等)を基にアクセスを制限するのに対し、WAF は、 FW で制限できないウェブアプリケーションへの通信内容を検査することができ、さらに細かなアプリケーションへの脆弱性攻撃に対しての事前対策として細かな制限やルールを定義することが有効です。  
+詳しくは、 [IPA Web Application Firewall(WAF)読本](https://www.ipa.go.jp/security/vuln/waf.html)　を呼んでみましょう。
+ここで言う一般的な FW は、AWS では、[Security Group](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html) のイメージです。
+[AWS WAF (V2)](https://docs.aws.amazon.com/ja_jp/waf/latest/APIReference/Welcome.html) については、Classmethod さんの記事が良かったので読んでみてください。  
+[AWS WAF を完全に理解する WAF の基礎から v2 の変更点まで](https://dev.classmethod.jp/articles/fully-understood-aws-waf-v2/)  
+記事では、自分が業務で実際に使用した AWS WAF の設定で Terraform で記述したものを載せていこうと思います。
 
 ### Frontend 特定の IP からのみアクセスを許可する
+
+Web ACL(Access Contrll List) に対して作成した WAF の ACL をアタッチします。
 
 ```hcl
 resource "aws_cloudfront_distribution" "frontend" {
@@ -62,7 +71,7 @@ resource "aws_waf_web_acl" "frontend_ip_limit" {
 }
 ```
 
-### API 特定のメールアドレスを含むリクエストをを拒否する。
+### API 特定のメールアドレスを含むリクエストを拒否する。
 
 ```hcl
 resource "aws_wafv2_web_acl" "mail_limit" {
