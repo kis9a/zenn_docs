@@ -1,10 +1,32 @@
 ---
-title: "MacOS の skim で PDF のリロード"
+title: "個人的 MacOS で skim で PDF を開くためのスクリプト"
 emoji: "🗒"
 type: "tech"
 topics: ["shell", "skim", "osascript"]
 published: false
 ---
+
+### はじめに
+
+MacOS の PDF viewer は何を使用していますか？最近まで、PDF でドキュメントを書くことはなかったので、特に何も使用していませんでしたが、 [Skim](https://sourceforge.net/projects/skim-app/) というものを見つけて良さそうなので使い始めました。
+
+- Viewing PDFs
+- Adding and editing notes
+- Highlighting important text, including one-swipe highlight modes
+- Making "snapshots" for easy reference
+- Navigation using table of contents or thumbnails, with visual history
+- View all your notes and highlights
+- Convenient reading in full screen
+- Giving powerful presentations, with built-in transitions
+- Handy preview of internal links
+- Focus using a reading bar
+- Magnification tool
+- Smart cropping tools
+- Extensive AppleScript support
+- Bookmarks
+- And much more...
+
+> https://sourceforge.net/projects/skim-app/
 
 ### MacOS の skim で PDF のリロード
 
