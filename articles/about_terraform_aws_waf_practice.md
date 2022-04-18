@@ -1,8 +1,8 @@
 ---
-title: "最近、業務で使用した AWS WAF の設定、IP, Request, Path 制限など。 [Terraform]"
+title: "最近の業務で使用した AWS WAF の設定 IP, Request, Rate limit 等でのアクセス制限"
 emoji: "☁"
 type: "tech"
-topics: ["terraform", "WAF", "AWS"]
+topics: ["AWS", "WAF", "terraform"]
 published: true
 ---
 

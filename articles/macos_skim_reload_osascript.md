@@ -1,36 +1,55 @@
 ---
-title: "個人的 MacOS で skim で PDF を開くためのスクリプト"
+title: "個人的 MacOS で skim で PDF をリロードするためのスクリプトを書きました！"
 emoji: "🗒"
 type: "tech"
 topics: ["shell", "skim", "osascript"]
 published: false
 ---
 
-### はじめに
+### 背景
 
-MacOS の PDF viewer は何を使用していますか？最近まで、PDF でドキュメントを書くことはなかったので、特に何も使用していませんでしたが、 [Skim](https://sourceforge.net/projects/skim-app/) というものを見つけて良さそうなので使い始めました。
+MacOS の PDF viewer は何を使用していますか？ 自分は、PDF でドキュメントや出力を必要とすることはなかったので、特に何も使用していませんでしたが、最近、業務でデータが集計できてきたので合わせて、統計等をかじり始めまして R 言語というものに手を出し始めたのですが、R の Preview が Rstudio 一強な感じでしたが、Vim で編集してシンプルに Preview だけ開きたいという制約があるので、RStudio 使いません。plot の Preview とかを PDF に出力して見たいと言う要件になりました。同時に Latex や RMarkdown も環境構築だけしましたが、こちらも Preview の出力が PDF みたいな感じでしたので CLI base でプレビューするソフトウェアが必要となりました。MacOS の標準の Preview app では、コマンドが提供されているかわからないですし、PDF 再出力後に一度 Previewr app に focus しなければならないという感じでした。 [Skim](https://sourceforge.net/projects/skim-app/) というものを見つけて情報が多そうなのと機能が良さそうなので使い始めました。機能自体まだ全然使いこなせていませんが、以下のような機能があるそうです。
 
-- Viewing PDFs
-- Adding and editing notes
-- Highlighting important text, including one-swipe highlight modes
-- Making "snapshots" for easy reference
-- Navigation using table of contents or thumbnails, with visual history
-- View all your notes and highlights
-- Convenient reading in full screen
-- Giving powerful presentations, with built-in transitions
-- Handy preview of internal links
-- Focus using a reading bar
-- Magnification tool
-- Smart cropping tools
-- Extensive AppleScript support
-- Bookmarks
-- And much more...
+\ Viewing PDFs \ Adding and editing notes \ Highlighting important text, including one-swipe highlight modes \ Making "snapshots" for easy reference \ Navigation using table of contents or thumbnails, with visual history \ View all your notes and highlights \ Convenient reading in full screen \ Giving powerful presentations, with built-in transitions \ Handy preview of internal links \ Focus using a reading bar \ Magnification tool \ Smart cropping tools \ Extensive AppleScript support \ Bookmarks \ And much more... \
 
-> https://sourceforge.net/projects/skim-app/
-
-### MacOS の skim で PDF のリロード
+Skim を使い始めたはいいものの、PDF 再出力後に SKim Application にフォーカスしても表示内容が出力されないのです。以下のドキュメントを読むに `Skim はファイルの場所ではなくファイルオブジェクトを追跡するため、PDF ファイルが置き換えられる前に削除されると、Skim の自動ファイル更新メカニズムは無効になります。` との事です、確実にリロードをしたいなら、PDF 再作成後に手動で開き直すか、スクリプトで開き直す必要があるそうです。とにかく、個人的には、以下の sample の applescript を参考に wrap して、Vim から呼び出せばいいという結論になりました。
 
 [Skim / Wiki / TeX_and_PDF_Synchronization](https://sourceforge.net/p/skim-app/wiki/TeX_and_PDF_Synchronization/)
+
+> Reload updated PDF files
+> Skim can recognize when the PDF file is updated on disk, for example by a LaTeX process. Skim then offers to reload the file. If you choose Auto from the dialog, Skim will reload this document without asking for future updates.
+> Use this feature with care, as reloading the file will typically lose any notes. If you have unsaved edits, Skim will always ask you whether to reload, even if you have previously chosen Auto. When you choose No, you can still reload manually by choosing Revert from the File menu.
+> This feature should be turned on in the LaTeX preferences.
+> Even though we offer this feature, we discourage you from using it. In general, the only reliable way to automatically reload the document is by triggering the reload yourself from a script as the one below, which therefore is the preferred approach.
+> Note: Skim's automatic file updating mechanism gets disabled when the PDF file is deleted before it is replaced, because Skim tracks the file object rather than the location of the file. This is by design for good reasons, and it is the way any document based Cocoa application works. Some TeX scripts (e.g. simpdftex) remove the PDF file, and therefore Skim will not automatically reload the file produced by such processes.
+> Note: The auto-reload functionality will not work properly when you have to run a latex process more than once, for example to support references generated by bibtex, because Skim will be trying to reload the document when the second latex process is busy. You could instead run latex and bibtex together with forcing a Skim reload using the script below.
+
+### サンプルのスクリプト
+
+Current directory の \*.tex ファイルを pdflatex && bibtex して、 Current directory \*.pdf に出力します。その後、pdffile を開き直します。このままでは、Current directory に PDF 以外のファイル(\*.aux \*.bbl \*ablg \*.log \*.pdf)等、色々出力されて少しうざいなと思ったので、/tmp に出力したほうがいいなと思いました。 また、Skim を　 activate するとフォーカスされ、毎回ターミナルに にフォーカスを戻さないといけないので、それも自動でやってしましたいですね、あとは、Latex 以外の変換も提供したスクリプトが必要だなと思いました。
+
+```applescript
+!/bin/bash
+
+# the first argument should be the tex file, either with or without extension
+file="$1"
+[ "${file:0:1}" == "/" ] || file="${PWD}/${file}"
+pdffile="${file%.tex}.pdf"
+
+# run pdflatex and bibtex, and open or reload the pdf  in Skim
+pdflatex "${file}" && bibtex "${file}" && pdflatex "${file}" && pdflatex "${file}" && \
+/usr/bin/osascript << EOF
+  set theFile to POSIX file "${pdffile}" as alias
+  tell application "Skim"
+  activate
+  set theDocs to get documents whose path is (get POSIX path of theFile)
+  if (count of theDocs) > 0 then revert theDocs
+  open theFile
+  end tell
+EOF
+```
+
+### イメージ
 
 ![skim gif](/images/skim.gif)
 
@@ -71,22 +90,24 @@ EOF
 
 ##### Vim
 
+[GitHub - skywind3000/asyncrun.vim: Run Async Shell Commands in Vim 8.0 / NeoVim and Output to the Quickfix Window !!](https://github.com/skywind3000/asyncrun.vim)
+
 ```vim
 function! s:skimPDFLatex()
   let absolutePath=expand('%:p')
-  let cmd = "AsyncRun skim -s pdflatex " . absolutePath
+  let cmd = "AsyncRun skim_reload -s pdflatex " . absolutePath
   silent execute cmd
 endfunction
 
 function! s:skimRPlot()
   let absolutePath=expand('%:p')
-  let cmd = "AsyncRun skim -s rplot " . absolutePath
+  let cmd = "AsyncRun skim_reload -s rplot " . absolutePath
   silent execute cmd
 endfunction
 
 function! s:skimRMarkdown()
   let absolutePath=expand('%:p')
-  let cmd = "AsyncRun skim -s rmd " . absolutePath
+  let cmd = "AsyncRun skim_reload -s rmd " . absolutePath
   silent execute cmd
 endfunction
 
@@ -96,6 +117,8 @@ autocmd BufEnter *.tex nnoremap <silent> sk :call <SID>skimPDFLatex()<CR>
 ```
 
 ##### Source code
+
+スクリプト全行です。/usr/local/bin/skim_reload とかに置いて使用しています。
 
 ```bash
 #!/bin/bash
