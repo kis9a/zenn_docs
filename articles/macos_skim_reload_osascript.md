@@ -2,8 +2,8 @@
 title: "個人的 MacOS で skim で PDF をリロードするためのスクリプトを書きました！"
 emoji: "🗒"
 type: "tech"
-topics: ["shell", "skim", "osascript"]
-published: false
+topics: ["skim", "osascript", "shell"]
+published: true
 ---
 
 ### 背景
@@ -26,7 +26,7 @@ Skim を使い始めたはいいものの、PDF 再出力後に SKim Application
 
 ### サンプルのスクリプト
 
-Current directory の \*.tex ファイルを pdflatex && bibtex して、 Current directory \*.pdf に出力します。その後、pdffile を開き直します。このままでは、Current directory に PDF 以外のファイル(\*.aux \*.bbl \*ablg \*.log \*.pdf)等、色々出力されて少しうざいなと思ったので、/tmp に出力したほうがいいなと思いました。 また、Skim を　 activate するとフォーカスされ、毎回ターミナルに にフォーカスを戻さないといけないので、それも自動でやってしましたいですね、あとは、Latex 以外の変換も提供したスクリプトが必要だなと思いました。
+Current directory の \*.tex ファイルを pdflatex && bibtex して、 Current directory \*.pdf に出力します。その後、pdffile を開き直します。このままでは、Current directory に PDF 以外のファイル(\*.aux \*.bbl \*ablg \*.log \*.pdf)等、色々出力されて少し面倒なので、/tmp に出力したほうがいいなと思いました。 また、Skim を activate するとフォーカスされ、毎回ターミナルに にフォーカスを戻さないといけないので、それも自動でやってしましたいですね、あとは、Latex 以外の変換も提供したスクリプトが必要だなと思いました。
 
 ```applescript
 !/bin/bash
@@ -53,7 +53,27 @@ EOF
 
 ![skim gif](/images/skim.gif)
 
-##### OSAscript
+### AppleScript
+
+osacript とは(man osacript)、`execute AppleScripts and other OSA language scripts` MacOS がアプリケーションを操作するための、AppleScript を実行するためのコマンドです。
+Apple script では、いろいろなことができるようです、
+
+```bash
+# 出力
+osascript -e 'return "Hello, World"'
+
+# クリップボードの中身を出力
+osascript -e 'get the clipboard'
+
+# Finder アプリケーションにダイアログを出させる
+osascript -e 'tell Application "Finder" to display dialog'
+
+# bluetooth 接続とか
+# [GitHub - Rasukarusan/fzf-bluetooth-connect: Fuzzy search and connect bluetooth devices via the terminal] \
+# (https://github.com/Rasukarusan/fzf-bluetooth-connect)
+```
+
+以下か実際に使用するスクリプトでは、 current_term() で、今アクティブ(一番前にいる)　アプリケーション名を取得します。open_skim() では、PDF_FILE を skim で開き ${FOCUS} = false のときは、current_term() にフォーカスを戻します。
 
 ```applescript
 #!/bin/bash
@@ -88,9 +108,12 @@ EOF
 }
 ```
 
-##### Vim
+### Vim
 
+skim_reload コマンドを呼び出す時は、asyncrun を使用して、非同期で実行します、これにより Vim での編集を中断する事なくスクリプトを実行できます。
 [GitHub - skywind3000/asyncrun.vim: Run Async Shell Commands in Vim 8.0 / NeoVim and Output to the Quickfix Window !!](https://github.com/skywind3000/asyncrun.vim)
+
+autocmd を変更してファイルの保存時に実行してもいいと思います。現在では、nnoremap sk をタイプした時に filtype ごとにスクリプトのコンパイルを非同期で実行します。
 
 ```vim
 function! s:skimPDFLatex()
@@ -116,9 +139,9 @@ autocmd BufEnter *.r nnoremap <silent> sk :call <SID>skimRPlot()<CR>
 autocmd BufEnter *.tex nnoremap <silent> sk :call <SID>skimPDFLatex()<CR>
 ```
 
-##### Source code
+### おわりに、スクリプト全行
 
-スクリプト全行です。/usr/local/bin/skim_reload とかに置いて使用しています。
+スクリプト全行です。/usr/local/bin/skim_reload とかに置いて使用しています。とりあえず、pdflatex, rplot, rmarkdown をコンパイルできる用にしていますが、エラーハンドリングとか拡張性等まだまだ課題はあるのか、といった感じですが、とりあえずしばらく使ってみて改善していこうと思います。シェルスクリプトに関しては、自明ですが --silent, --focus オプションフラグの解決、各環境ごとのファイルパスの解決等、基本的なものしか追加していません。
 
 ```bash
 #!/bin/bash
@@ -255,7 +278,6 @@ EOF
 		;;
 	*)
 		printf "Type not found %s\n" "$1" 1>&2
-		help
 		exit 0
 		;;
 	esac
