@@ -1,5 +1,5 @@
 ---
-title: "CloudWatch logs Subscription filter からSlackの特定チャンネルにログを通知してみた。"
+title: "CloudWatch logs Subscription filter からSlackの特定チャンネルにログを通知"
 emoji: "⏰"
 type: "tech"
 topics: ["go", "lambda", "cloudwatch", "terraform"]

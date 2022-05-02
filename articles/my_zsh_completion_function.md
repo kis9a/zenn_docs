@@ -1,5 +1,5 @@
 ---
-title: "zsh 関数、コマンド一覧から検索して補完する関数を書きました！"
+title: "zsh 関数、コマンド一覧から検索して補完する関数を書いた"
 emoji: "🐚"
 type: "tech"
 topics: ["shell", "zsh"]
