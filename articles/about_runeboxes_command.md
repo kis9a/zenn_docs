@@ -1,5 +1,5 @@
 ---
-title: "文字列を文字で囲むコマンドを書きました！(runeboxes)"
+title: "runeboxes 文字列を文字で囲むコマンドを書いた"
 emoji: "🐚"
 type: "tech"
 topics: ["shell", "bash"]
@@ -8,10 +8,7 @@ published: true
 
 ## 背景
 
-文字列を文字で囲むコマンドが欲しかったので作りました！
-以前から terminal で開発生活しているので、いろいろなコマンドをインストールしたり、適当な shell script を書いて生活環境を向上させてきました。今回の runeboxes コマンドもそのライフサイクルの一環です。使用用途があるわからないですが、使えそうな箇所を参考にしてみてください。 また、shell script で書くのは 複数環境での互換性よりも手軽さを意識しているからです。OSX (Darwin Kernel Version 21.2.0) と Ubuntu 20.04 (ami-0ec4d40472158dbd2)で動作確認済み、shellcheck を参考に作成しています。
-
-全角、半角等、複数幅が混ざった文字列を囲めるようになってます。以前、~/.zshrc に書き込んで使用していた [play-display-in-box-harfwidth.sh · GitHub](https://gist.github.com/kis9a/3a95e26ece257b65a87539cb97381181) では、半角のみの対応だったのでそこからの改善です、文字列の幅を取得するテクニックが shell script で見つかりそうになかったので、文字幅の取得に関しては、[GitHub - mattn/go-runewidth](https://github.com/mattn/go-runewidth) を使用させていただいています。
+文字列を文字で囲むコマンドが欲しかったので作りました。以前から terminal で開発生活しているので、いろいろなコマンドをインストールしたり、適当な shell script を書いて生活環境を向上させてきました。今回の runeboxes コマンドもそのライフサイクルの一環です。使用用途があるわからないですが、使えそうな箇所を参考にしてみてください。 また、shell script で書くのは 複数環境での互換性よりも手軽さを意識しているからです。OSX (Darwin Kernel Version 21.2.0) と Ubuntu 20.04 (ami-0ec4d40472158dbd2)で動作確認済み、shellcheck を参考に作成しています。全角、半角等、複数幅が混ざった文字列を囲めるようになってます。以前、~/.zshrc に書き込んで使用していた [play-display-in-box-harfwidth.sh · GitHub](https://gist.github.com/kis9a/3a95e26ece257b65a87539cb97381181) では、半角のみの対応だったのでそこからの改善です、文字列の幅を取得するテクニックが shell script で見つかりそうになかったので、文字幅の取得に関しては、[GitHub - mattn/go-runewidth](https://github.com/mattn/go-runewidth) を使用させていただいています。
 リポジトリ: [GitHub - kis9a/runeboxes: Display the piped string in the character box.](https://github.com/kis9a/runeboxes)
 
 ## イメージ
@@ -72,6 +69,91 @@ EXAMPLE:
 ```
 
 ![runeboxes vim gif](/images/runeboxes-vim.gif)
+
+## プロトタイプ
+
+~/.zshrc に 全角等 非対応 のプロトタイプをはじめに書いていた。
+
+```bash
+function display_in_box() {
+  if [[ -z "$1" ]]; then
+    echo "first argument is required"
+  elif [[ "${#1}" -gt 1 ]]; then
+    echo "over string width, str width expected less than 1 int"
+  elif [[ -z $(LC_ALL=C grep -o '[[:print:][:cntrl:]]' <<<"$1") ]]; then
+    echo "not supported full width char string"
+  else
+    ar="$(cat -)"
+    lines=""
+    max=0
+    height=$(($(echo $ar | wc -l) + 2))
+
+    while read -r l; do
+      if [[ ${#l} -gt $max ]]; then
+        max=${#l}
+      fi
+      lines+=("$l")
+      ((i++))
+    done <<<"$ar"
+
+    for ((k = 0; k < $((max + 4)); k = $k + 1)); do
+      echo -n "$1"
+    done
+
+    echo ''
+    for ((k = 0; k < $((max + 4)); k = $k + 1)); do
+      if [[ $k -eq 0 || $k -eq $((max + 3)) ]]; then
+        echo -n "$1"
+      else
+        echo -n " "
+      fi
+    done
+
+    echo ''
+    for l in ${lines[@]}; do
+      echo -n "$1 $l"
+      for ((k = 0; k < $((max - ${#l} + 1)); k++)); do
+        echo -n " "
+      done
+      echo "$1"
+    done
+
+    for ((k = 0; k < $((max + 4)); k = $k + 1)); do
+      if [[ $k -eq 0 || $k -eq $((max + 3)) ]]; then
+        echo -n "$1"
+      else
+        echo -n " "
+      fi
+    done
+
+    echo ''
+    for ((k = 0; k < $((max + 4)); k = $k + 1)); do
+      echo -n "$1"
+    done
+  fi
+}
+```
+
+```
+$ IFS=""; cowsay "HELLO" | display_in_box # | display_in_box \&
+
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+&                                  &
+& ################################ &
+& #                              # &
+& #  _______                     # &
+& # < HELLO >                    # &
+& #  -------                     # &
+& #         \   ^__^             # &
+& #          \  (oo)\_______     # &
+& #             (__)\       )\/\ # &
+& #                 ||----w |    # &
+& #                 ||     ||    # &
+& #                              # &
+& ################################ &
+&                                  &
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+```
 
 ## ロジック
 
@@ -375,11 +457,5 @@ exec 3< <(echo a); cat <&3; exec 3>&- ## fd とか exec
 ### 終わりに
 
 シェルスクリプトは他の言語より手軽に書けて手軽に実行できる点がいいですね  
-最近、以前よりは、まともに書けるようになって来た気がします。  
+最近、以前よりは、まともに書けるようになって来た気がします。
 runeboxes コマンドに関しては役に立つかどうかはわかりませんが、ぜひ使ってみてください！
-その他には、以下のようなシェルスクリプト関連のトピックに関連するを投稿しています。  
-興味があればぜひコメント等をいただけると嬉しいです。
-
-- [zsh 関数、コマンド一覧から検索して補完する関数を書きました！](https://zenn.dev/kis9a/articles/my_zsh_completion_function)
-- [Terraform のドキュメントを簡単に開くためのコマンドを書きました！(tfref)](https://zenn.dev/kis9a/articles/about_tfref_command)
-- [Vim script 三角形に文字列を入力するためだけの関数を書きました！](https://zenn.dev/kis9a/articles/display_pyramid_poop_vim_script)

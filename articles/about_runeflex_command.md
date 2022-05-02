@@ -1,5 +1,5 @@
 ---
-title: "複数ファイルの文字列を並べるコマンドを書きました！(runeflex)"
+title: "runeflex 複数ファイルの文字列を並べるコマンドを書いた"
 emoji: "🐚"
 type: "tech"
 topics: ["shell", "bash"]
@@ -8,10 +8,9 @@ published: true
 
 ## 背景
 
-> 文字列を文字で囲むコマンドが欲しかったので作りました！
-> 以前から terminal で開発生活しているので、いろいろなコマンドをインストールしたり、適当な shell script を書いて生活環境を向上させてきました。今回の runeflex コマンドもそのライフサイクルの一環です。使用用途があるわからないですが、使えそうな箇所を参考にしてみてください。 また、shell script で書くのは 複数環境での互換性よりも手軽さを意識しているからです。OSX (Darwin Kernel Version 21.2.0) と Ubuntu 20.04 (ami-0ec4d40472158dbd2)で動作確認済み、shellcheck を参考に作成しています。
+> 文字列を文字で囲むコマンドが欲しかったので作りました。以前から terminal で開発生活しているので、いろいろなコマンドをインストールしたり、適当な shell script を書いて生活環境を向上させてきました。今回の runeboxes コマンドもそのライフサイクルの一環です。
 
-https://zenn.dev/kis9a/articles/about_runeflex_command
+https://zenn.dev/kis9a/articles/about_runeboxes_command
 
 これの続きです。文字列を文字で囲めるようになった訳ですが、並べるのはどうすればいいんだと思って作りました。おそらく実用性は、皆無で、文字通りクソを標準出力して楽しむためのコマンドです。ほとんど以前のものと被る項目も多いため以前の記事と合わせてみていただけるといいとお思います。
 
@@ -338,10 +337,3 @@ set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 シェルスクリプトは他の言語より手軽に書けて手軽に実行できる点がいいですね  
 以前よりは、まともに書けるようになって来た気がします。  
 runeflex コマンドに関しては役に立つかどうかはわかりませんが、ぜひ使ってみてください！
-その他には、以下のようなシェルスクリプト関連のトピックに関連するを投稿しています。  
-興味があればぜひコメント等をいただけると嬉しいです。
-
-- [文字列を文字で囲むコマンドを書きました！(runeboxes)](https://zenn.dev/kis9a/articles/about_runeboxes_command)
-- [zsh 関数、コマンド一覧から検索して補完する関数を書きました！](https://zenn.dev/kis9a/articles/my_zsh_completion_function)
-- [Terraform のドキュメントを簡単に開くためのコマンドを書きました！(tfref)](https://zenn.dev/kis9a/articles/about_tfref_command)
-- [Vim script 三角形に文字列を入力するためだけの関数を書きました！](https://zenn.dev/kis9a/articles/display_pyramid_poop_vim_script)

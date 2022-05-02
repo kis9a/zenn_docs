@@ -1,5 +1,5 @@
 ---
-title: "個人的 MacOS で skim で PDF をリロードするためのスクリプトを書きました！"
+title: "個人的 MacOS で skim で PDF をリロードするためのスクリプト"
 emoji: "🗒"
 type: "tech"
 topics: ["skim", "osascript", "shell"]
