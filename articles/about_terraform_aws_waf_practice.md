@@ -1,5 +1,5 @@
 ---
-title: "最近の業務で使用した AWS WAF の設定 IP, Request, Rate limit 等でのアクセス制限"
+title: "AWS WAF の設定 IP, Request, Rate limit 等でのアクセス制限"
 emoji: "☁"
 type: "tech"
 topics: ["AWS", "WAF", "terraform"]
@@ -13,7 +13,14 @@ WAF の一般的な FW (FireWall) との違いは、FW は、通信における�
 ここで言う一般的な FW は、AWS では、[Security Group](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html) のイメージです。
 [AWS WAF (V2)](https://docs.aws.amazon.com/ja_jp/waf/latest/APIReference/Welcome.html) については、Classmethod さんの記事が良かったので読んでみてください。  
 [AWS WAF を完全に理解する WAF の基礎から v2 の変更点まで](https://dev.classmethod.jp/articles/fully-understood-aws-waf-v2/)  
-記事では、自分が業務で実際に使用した AWS WAF の設定で Terraform で記述したものを載せていこうと思います。
+記事では、実際に使用した AWS WAF の設定で Terraform で記述したものを載せていこうと思います。
+
+##### 料金
+
+WAF の注意点ですが、WebACL やルールの作成に対しての料金がかかります。
+https://aws.amazon.com/jp/waf/pricing/
+
+![aws-waf-price-summary-1](/images/aws-waf-price-summary-1.png)
 
 ### Frontend: 特定の IP からのみアクセスを許可する
 
@@ -360,7 +367,7 @@ ab (Apatch Bench) を使用して、2000 回リクエストを送ってみます
 ab -n 2000 -c 1 -v 2 https://example-api.com/v1/account
 ```
 
-##### 注意点
+##### Rate limit の注意点
 
 以下のスクリプトは、200 のレスポンスが、制限され 403 のレスポンスになる、それが解除され 200 のレスポンスに戻る様子の時間を出力します。実際に実行してみると指定した、1000 より多くのリクエストを投げても制限されず、1500 ~ 2000 の間で自分環境では、制限され、制限解除になる時間も思ったより短かったです。ALB の monitoring タブで実際のリクエスト数をみてみると ちょうど 1000 くらいだったのでリクエストする方でキャッシュされているのかどうか？チェックされる 30 秒間にリクエストが超過しているのか、ここらへんの仕様は時間がある時に、もう少し詳しくみてみる必要があると思いました。５分間で 1000 に制限していますが、もう少し少ない数にしてもいいかもしれませんね。もしもっと正確にリクエスト数を制限する要件になったら、Backend 側で Elasticache などの key-value キャッシュストアに、同一 IP に対してのリクエスト数をインクリメントして、制限時間で expir するとかも考えています。
 
@@ -393,6 +400,428 @@ for ((i = 0; i < 2500; i++)); do
     fi
   fi
 done
+```
+
+### 必要な Managed rules をまとめた WebACL を使用する。
+
+AWS によって管理されている一般的な WAF の rules です。必要そうな、Rule をまとめて WebACL を定義し、必要なリソース等にアタッチするといいと思います。以下は使用したルールの概要とコードです。
+
+https://docs.aws.amazon.com/ja_jp/waf/latest/developerguide/aws-managed-rule-groups-list.html
+
+##### AWSManagedRulesUnixRuleSet
+
+> POSIX オペレーティングシステムルールグループには、POSIX および POSIX と同等のオペレーティングシステムに固有の脆弱性の悪用 (ローカルファイルインクルージョン (LFI) 攻撃など) に関連するリクエストパターンをブロックするルールが含まれています。これにより、攻撃者がアクセスしてはならないファイルの内容を公開したり、コードを実行したりする攻撃を防ぐことができます。アプリケーションの一部が POSIX または POSIX と同等のオペレーティングシステム (Linux、AIX、HP-UX、macOS、Solaris、FreeBSD、OpenBSD など) で実行されている場合は、このルールグループを評価する必要があります。
+
+##### AWSManagedRulesLinuxRuleSet
+
+> Linux オペレーティングシステムルールグループには、Linux 固有のローカルファイルインクルージョン (LFI) 攻撃など、Linux 固有の脆弱性の悪用に関連するリクエストパターンをブロックするルールが含まれています。これにより、攻撃者がアクセスしてはならないファイルの内容を公開したり、コードを実行したりする攻撃を防ぐことができます。アプリケーションの一部が Linux で実行されている場合は、このルールグループを評価する必要があります。このルールグループは、POSIX operating system ルールグループと組み合わせて使用する必要があります。
+
+##### AWSManagedRulesSQLiRuleSet
+
+> sql Database ルールグループには、SQL インジェクション攻撃などの SQL データベースの悪用に関連するリクエストパターンをブロックするルールが含まれています。これにより、不正なクエリのリモートインジェクションを防ぐことができます。アプリケーションが SQL データベースと連結している場合は、このルールグループを評価します。
+
+##### AWSManagedRulesAmazonIpReputationList
+
+> Amazon IP 評価リストルールグループには、Amazon 内部脅威インテリジェンスに基づくルールが含まれています。これは、通常、ボットやその他の脅威に関連付けられている IP アドレスをブロックする場合に便利です。これらの IP アドレスをブロックすることで、ボットを軽減し、悪意のあるアクターが脆弱なアプリケーションを発見するリスクを軽減できます。
+
+##### AWSManagedRulesKnownBadInputsRuleSet
+
+既知の不正な入力ルールグループには、無効であることがわかっており脆弱性の悪用または発見に関連するリクエストパターンをブロックするルールが含まれています。これにより、悪意のあるアクターが脆弱なアプリケーションを発見するリスクを軽減できます。
+
+##### AWSManagedRulesCommonRuleSet
+
+> コアルールセット (CRS) ルールグループには、ウェブアプリケーションに一般的に適用可能なルールが含まれています。これにより、OWASP の出版物に記載されている高リスクの脆弱性や一般的な脆弱性など、さまざまな脆弱性の悪用に対する保護が提供されます。Owasp Top 10。すべての AWS WAF ユースケースでこのルールグループを使用することを検討してください。
+
+```hcl
+resource "aws_wafv2_web_acl" "managed" {
+  name  = "${var.service}-web-acl-managed-rules"
+  scope = "REGIONAL"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWSManagedRulesCommonRuleSet"
+    priority = 10
+
+    override_action {
+      count {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+
+        excluded_rule {
+          name = "SizeRestrictions_QUERYSTRING"
+        }
+
+        excluded_rule {
+          name = "NoUserAgent_HEADER"
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = false
+      metric_name                = "AWSManagedRulesCommonRuleSetMetric"
+      sampled_requests_enabled   = false
+    }
+  }
+
+  rule {
+    name     = "AWSManagedRulesKnownBadInputsRuleSet"
+    priority = 20
+
+    override_action {
+      count {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = false
+      metric_name                = "AWSManagedRulesKnownBadInputsRuleSetMetric"
+      sampled_requests_enabled   = false
+    }
+  }
+
+  rule {
+    name     = "AWSManagedRulesAmazonIpReputationList"
+    priority = 30
+
+    override_action {
+      count {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAmazonIpReputationList"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = false
+      metric_name                = "AWSManagedRulesAmazonIpReputationListMetric"
+      sampled_requests_enabled   = false
+    }
+  }
+
+  rule {
+    name     = "AWSManagedRulesSQLiRuleSet"
+    priority = 50
+
+    override_action {
+      count {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesSQLiRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = false
+      metric_name                = "AWSManagedRulesSQLiRuleSetMetric"
+      sampled_requests_enabled   = false
+    }
+  }
+
+  rule {
+    name     = "AWSManagedRulesLinuxRuleSet"
+    priority = 60
+
+    override_action {
+      count {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesLinuxRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = false
+      metric_name                = "AWSManagedRulesLinuxRuleSetMetric"
+      sampled_requests_enabled   = false
+    }
+  }
+
+  rule {
+    name     = "AWSManagedRulesUnixRuleSet"
+    priority = 70
+
+    override_action {
+      count {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesUnixRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = false
+      metric_name                = "AWSManagedRulesUnixRuleSetMetric"
+      sampled_requests_enabled   = false
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = false
+    metric_name                = "TerraformWebACLMetric"
+    sampled_requests_enabled   = false
+  }
+}
+
+output "managed_rule_arn" {
+  value = aws_wafv2_web_acl.managed.arn
+}
+```
+
+### WAF Cloudfront basic 認証
+
+以下の記事を参考に WAF リソースでも Cloudfront に basic 認証をつけることができます。 以下は実際にやってみたコードです。今までは、 Lambda@Edge でやって管理コストがかかっていたので、WAF だけでつけることができるのは、最高です。
+
+https://dev.classmethod.jp/articles/aws-waf-basic-auth/
+
+kms.tf
+
+```hcl
+resource "aws_kms_key" "dev" {
+  description             = var.service
+  enable_key_rotation     = true
+  is_enabled              = true
+  deletion_window_in_days = 7
+}
+
+resource "aws_kms_alias" "dev" {
+  name          = "alias/dev"
+  target_key_id = aws_kms_key.dev.key_id
+}
+```
+
+~/.zshrc
+
+```bash
+function kms_encrypt() {
+  if [[ "$#" -lt 1 ]]; then
+    echo 'kms_encrypt $alias_suffix $input_filepath $profile $region'
+  else
+    keyId=$(aws kms describe-key --key-id alias/"$1" --profile "${3:=default}" --region "${4:=ap-northeast-1}" --output json | jq -r .KeyMetadata.KeyId)
+    aws kms encrypt --key-id "$keyId" --region "${4:=ap-northeast-1}" --plaintext fileb://"$2" \
+      --output text --query CiphertextBlob --profile "${3:=default}"
+  fi
+}
+
+function kms_decrypt() {
+  if [[ "$#" -lt 1 ]]; then
+    echo 'kms_decrypt $input_filepath $profile $region'
+  else
+    aws kms decrypt --ciphertext-blob fileb://<(cat "$1" | base64 -D) --output json --profile "$2" --region "${3:=ap-northeast-1}" |
+      jq .Plaintext --raw-output | base64 -D
+  fi
+}
+```
+
+secrets.yaml
+
+```
+basic_auth_user: gJ3eTjnIoWiS9ee4
+basic_auth_password: FKRsxJ4Ngdg4bZ4d
+```
+
+```
+$ kms_encrypt dev secrets.yaml aws-profile > secrets.yaml.encrypted
+$ kms decrypt secrets.yaml.encrypted aws-profile
+```
+
+secrets.yaml.encrypted
+
+```hcl
+data "aws_kms_secrets" "secrets" {
+  secret {
+    name    = "secrets"
+    payload = file("${path.module}/secrets.yaml.encrypted")
+  }
+}
+
+locals {
+  s = yamldecode(data.aws_kms_secrets.secrets.plaintext["secrets"])
+}
+
+output "basic_auth_info" {
+  value     = join(" ", ["Basic", base64encode(join(":", ["${local.s.basic_auth_user}", "${local.s.basic_auth_password}"]))])
+  sensitive = true
+}
+
+output "cloudfront_basic_authentication" {
+  value =  aws_wafv2_web_acl.cloudfront_basic_authentication.arn
+}
+
+resource "aws_wafv2_web_acl" "cloudfront_basic_authentication" {
+  provider = aws.virginia
+  name     = "waf"
+  scope    = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "basic-auth"
+    priority = 0
+
+    action {
+      block {
+        custom_response {
+          response_code = 401
+          response_header {
+            name  = "www-authenticate"
+            value = "Basic"
+          }
+        }
+      }
+    }
+
+    statement {
+      not_statement {
+        statement {
+          byte_match_statement {
+            positional_constraint = "EXACTLY"
+            search_string         = join(" ", ["Basic", base64encode(join(":", ["${local.s.basic_auth_user}", "${local.s.basic_auth_password}"]))])
+            field_to_match {
+              single_header {
+                name = "authorization"
+              }
+            }
+            text_transformation {
+              priority = 0
+              type     = "NONE"
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "cloudfront-basic-authentication-rule"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "cloudfront-basic-authentication"
+    sampled_requests_enabled   = true
+  }
+}
+```
+
+```
+$ terraform output basic_auth_info | tr -d \" | cut -f 2 -d " " | base64 -d
+gJ3eTjnIoWiS9ee4:FKRsxJ4Ngdg4bZ4d
+```
+
+##### 特定の PATH だけ Basic 認証
+
+特定の PATH /tags\* にだけ Basic 認証を使用する例
+
+![aws-waf-basic-auth-tags-paths](/images/aws-waf-basic-auth-tags-paths.png)
+
+```hcl
+resource "aws_wafv2_regex_pattern_set" "tags_paths" {
+  provider = aws.virginia
+  name     = "${var.service}-tags-paths"
+  scope    = "CLOUDFRONT"
+
+  regular_expression {
+    regex_string = "tags.*"
+  }
+}
+
+
+resource "aws_wafv2_web_acl" "cloudfront_basic_authentication" {
+# 略
+  rule {
+    name     = "basic-auth"
+    priority = 0
+
+    action {
+      block {
+        custom_response {
+          response_code = 401
+          response_header {
+            name  = "www-authenticate"
+            value = "Basic"
+          }
+        }
+      }
+    }
+
+    statement {
+      and_statement {
+        statement {
+          regex_pattern_set_reference_statement {
+            arn = aws_wafv2_regex_pattern_set.tags_paths.arn
+
+            field_to_match {
+              uri_path {
+              }
+            }
+
+            text_transformation {
+              priority = 1
+              type     = "NONE"
+            }
+          }
+        }
+
+        statement {
+          not_statement {
+            statement {
+              byte_match_statement {
+                positional_constraint = "EXACTLY"
+                search_string         = join(" ", ["Basic", base64encode(join(":", ["${local.s.basic_auth_user}", "${local.s.basic_auth_password}"]))])
+
+                field_to_match {
+                  single_header {
+                    name = "authorization"
+                  }
+                }
+                text_transformation {
+                  priority = 0
+                  type     = "NONE"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "cloudfront-basic-authentication-rule"
+      sampled_requests_enabled   = true
+    }
+  }
+}
 ```
 
 ### 終わりに
