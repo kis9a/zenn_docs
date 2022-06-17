@@ -13,6 +13,20 @@ Terraform のドキュメントを簡単に開くためのシェルスクリプ�
 
 最近、terraform を書くことが多いのですが、<https://registry.terraform.io/providers/hashicorp/aws/latest/docs> $プロバイダーの docs を検索して開いて...リソースのドキュメントを検索して...ようやく見れる...が面倒になたので、Vim から (:!tfref ファイル名 ライン番号)で現在のラインよりも上のラインにあるリソース、data 定義を元に URL に変換して簡単に開けるようにしてみました。 現在は、プロバイダー aws, datadog, data_datadog, data_aws しか対応してないので、GCP など他のプロバイダーを使っている方は PR 頂くか、ご自分で改造お願いします。また、今後の terraform docs 自体の ページ URL 構造の変更等あった場合、動作しない場合には スクリプトのみを参考にお願いします。
 
+追記)  
+以下のプロバイダーに対応しました。
+
+```
+SUPPORTED TYPE:
+aws, data_aws
+google, data_google
+azurerm, data_azurerm
+kubernetes, data_kubernetes
+datadog, data_datadog
+onepassword, data_onepassword
+github, data_github
+```
+
 ## インストール tfref
 
 PATH が通っているディレクトリにファイルを追加して、実行権限を付与します。
